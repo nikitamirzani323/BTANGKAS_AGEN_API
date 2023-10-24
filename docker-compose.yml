@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+  btangkas-agen-api:
+    container_name: btangkas-agen-api
+    image: btangkas-agen-api:0.0.0.1
+    build: .
+    ports:
+      - 2113:2113
+    restart: always
