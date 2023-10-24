@@ -134,7 +134,7 @@ func CheckDBThreeField(table, field_1, value_1, field_2, value_2, field_3, value
 	}
 	return flag
 }
-func Get_AdminRule(tipe, idadmin string) string {
+func Get_AdminRule(tipe, idadmin, idcompany string) string {
 	con := db.CreateCon()
 	ctx := context.Background()
 	flag := false
@@ -142,11 +142,12 @@ func Get_AdminRule(tipe, idadmin string) string {
 	ruleadmingroup := ""
 
 	sql_select := `SELECT
-		ruleadmingroup  
-		FROM ` + configs.DB_tbl_admingroup + `  
-		WHERE idadmin = $1 
+		companyrule_rule  
+		FROM ` + configs.DB_tbl_mst_company_adminrule + `  
+		WHERE idcompany = $1 
+		AND companyrule_name = $2 
 	`
-	row := con.QueryRowContext(ctx, sql_select, idadmin)
+	row := con.QueryRowContext(ctx, sql_select, idcompany, idadmin)
 	switch e := row.Scan(&ruleadmingroup); e {
 	case sql.ErrNoRows:
 		flag = false

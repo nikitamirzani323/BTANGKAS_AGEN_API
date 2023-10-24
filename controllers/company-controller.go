@@ -602,7 +602,7 @@ func CompanySave(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
 	temp_decp := helpers.Decryption(name)
-	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+	client_admin, _, _ := helpers.Parsing_Decry(temp_decp, "==")
 
 	// aadmin, idrecord, code, idcurr, nmcompany, nmowner, phoneowner, emailowner, url, status, sData string
 	result, err := models.Save_company(
@@ -655,7 +655,7 @@ func CompanyadminruleSave(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
 	temp_decp := helpers.Decryption(name)
-	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+	client_admin, _, _ := helpers.Parsing_Decry(temp_decp, "==")
 
 	// admin, idrecord, idcompany, name, rule, sData string
 	result, err := models.Save_companyadminrule(
@@ -706,7 +706,7 @@ func CompanyadminSave(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
 	temp_decp := helpers.Decryption(name)
-	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+	client_admin, _, _ := helpers.Parsing_Decry(temp_decp, "==")
 
 	// admin, idrecord, idcompany, idrule, username, password, name, phone1, phone2, status, sData string
 	result, err := models.Save_companyadmin(
@@ -758,7 +758,7 @@ func CompanylistbetSave(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
 	temp_decp := helpers.Decryption(name)
-	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+	client_admin, _, _ := helpers.Parsing_Decry(temp_decp, "==")
 
 	// admin, idcompany, sData string, idrecord, minbet int
 	result, err := models.Save_companyListBet(
@@ -809,7 +809,7 @@ func CompanyconfpointSave(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
 	temp_decp := helpers.Decryption(name)
-	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+	client_admin, _, _ := helpers.Parsing_Decry(temp_decp, "==")
 
 	// admin, idcompany, sData string, idrecord, idbet, point int
 	result, err := models.Save_companyConfPoint(

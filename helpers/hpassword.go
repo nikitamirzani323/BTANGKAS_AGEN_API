@@ -63,9 +63,10 @@ func Decryption(dataencrypt string) string {
 	return result
 }
 
-func Parsing_Decry(data, pemisah string) (string, string) {
+func Parsing_Decry(data, pemisah string) (string, string, string) {
 	temp_client := s.Split(data, pemisah)
 	client_username := temp_client[0]
 	client_rule := temp_client[1]
-	return client_username, client_rule
+	client_company := temp_client[2]
+	return client_username, client_rule, client_company
 }

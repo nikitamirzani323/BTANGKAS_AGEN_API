@@ -88,7 +88,7 @@ func AdminruleSave(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
 	temp_decp := helpers.Decryption(name)
-	client_admin, _ := helpers.Parsing_Decry(temp_decp, "==")
+	client_admin, _, _ := helpers.Parsing_Decry(temp_decp, "==")
 
 	result, err := models.Save_adminrule(client_admin, client.Idadmin, client.Rule, client.Sdata)
 	if err != nil {
