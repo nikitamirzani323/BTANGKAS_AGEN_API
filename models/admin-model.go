@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,9 +16,10 @@ import (
 	"github.com/nleeper/goment"
 )
 
-const database_admin_local = configs.DB_tbl_admin
+const database_admincompany_local = configs.DB_tbl_mst_company_admin
+const database_adminrulecompany_local = configs.DB_tbl_mst_company_adminrule
 
-func Fetch_adminHome() (helpers.ResponseAdmin, error) {
+func Fetch_adminHome(idcompany string) (helpers.ResponseAdmin, error) {
 	var obj entities.Model_admin
 	var arraobj []entities.Model_admin
 	var res helpers.ResponseAdmin
@@ -26,43 +29,65 @@ func Fetch_adminHome() (helpers.ResponseAdmin, error) {
 	start := time.Now()
 
 	sql_select := `SELECT 
-			username , name, idadmin,
-			statuslogin, to_char(COALESCE(lastlogin,now()), 'YYYY-MM-DD HH24:MI:SS'), joindate, 
-			ipaddress   
-			FROM ` + database_admin_local + ` 
-			ORDER BY lastlogin DESC 
+			company_idadmin , companyrule_adminrule, tipeadmincompany, company_username,
+			company_ipaddress, to_char(COALESCE(company_lastloginadmin,now()), 'YYYY-MM-DD HH24:MI:SS'), 
+			company_name, company_phone1, company_phone2, company_status,    
+			createadmin_company, to_char(COALESCE(createadmindate_company,now()), 'YYYY-MM-DD HH24:MI:SS'), 
+			updateadmin_company, to_char(COALESCE(updateadmindate_company,now()), 'YYYY-MM-DD HH24:MI:SS'),    
+			FROM ` + database_admincompany_local + ` 
+			WHERE idcompany=$1 
+			ORDER BY company_lastloginadmin DESC 
 		`
 
-	row, err := con.QueryContext(ctx, sql_select)
+	row, err := con.QueryContext(ctx, sql_select, idcompany)
 
 	var no int = 0
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		no += 1
 		var (
-			username_db, name_db, idadminlevel_db                   string
-			statuslogin_db, lastlogin_db, joindate_db, ipaddress_db string
+			companyrule_adminrule_db                                                                                                  int
+			company_idadmin_db, tipeadmincompany_db, company_username_db                                                              string
+			company_ipaddress_db, company_lastloginadmin_db, company_name_db, company_phone1_db, company_phone2_db, company_status_db string
+			createadmin_company_db, createadmindate_company_db, updateadmin_company_db, updateadmindate_company_db                    string
 		)
 
 		err = row.Scan(
-			&username_db, &name_db, &idadminlevel_db,
-			&statuslogin_db, &lastlogin_db, &joindate_db,
-			&ipaddress_db)
+			&company_idadmin_db, &companyrule_adminrule_db, &tipeadmincompany_db, &company_username_db,
+			&company_ipaddress_db, &company_lastloginadmin_db, &company_name_db, &company_phone1_db, &company_phone2_db, &company_status_db,
+			&createadmin_company_db, &createadmindate_company_db, &updateadmin_company_db, &updateadmindate_company_db)
 
 		helpers.ErrorCheck(err)
-		if statuslogin_db == "Y" {
-			statuslogin_db = "ACTIVE"
+		status_css := configs.STATUS_CANCEL
+		if company_status_db == "Y" {
+			company_status_db = "ACTIVE"
+			status_css = configs.STATUS_COMPLETE
 		}
-		if lastlogin_db == "0000-00-00 00:00:00" {
-			lastlogin_db = ""
+		if company_lastloginadmin_db == "0000-00-00 00:00:00" {
+			company_lastloginadmin_db = ""
 		}
-		obj.Username = username_db
-		obj.Nama = name_db
-		obj.Rule = idadminlevel_db
-		obj.Joindate = joindate_db
-		obj.Lastlogin = lastlogin_db
-		obj.LastIpaddress = ipaddress_db
-		obj.Status = statuslogin_db
+		create := ""
+		update := ""
+		if createadmin_company_db != "" {
+			create = createadmin_company_db + ", " + createadmindate_company_db
+		}
+		if updateadmin_company_db != "" {
+			update = updateadmin_company_db + ", " + updateadmindate_company_db
+		}
+
+		obj.Admin_id = company_idadmin_db
+		obj.Admin_rule = _Get_adminrule(idcompany, companyrule_adminrule_db)
+		obj.Admin_tipe = tipeadmincompany_db
+		obj.Admin_username = company_username_db
+		obj.Admin_lastIpaddress = company_ipaddress_db
+		obj.Admin_lastlogin = company_lastloginadmin_db
+		obj.Admin_nama = company_name_db
+		obj.Admin_phone1 = company_phone1_db
+		obj.Admin_phone2 = company_phone2_db
+		obj.Admin_status = company_status_db
+		obj.Admin_status_css = status_css
+		obj.Admin_create = create
+		obj.Admin_update = update
 		arraobj = append(arraobj, obj)
 		msg = "Success"
 	}
@@ -71,22 +96,25 @@ func Fetch_adminHome() (helpers.ResponseAdmin, error) {
 	var objRule entities.Model_adminrule
 	var arraobjRule []entities.Model_adminrule
 	sql_listrule := `SELECT 
-		idadmin 	
-		FROM ` + configs.DB_tbl_admingroup + ` 
+		companyrule_adminrule,companyrule_name 	
+		FROM ` + database_adminrulecompany_local + ` 
+		WHERE idcompany=$1  
 	`
-	row_listrule, err_listrule := con.QueryContext(ctx, sql_listrule)
+	row_listrule, err_listrule := con.QueryContext(ctx, sql_listrule, idcompany)
 
 	helpers.ErrorCheck(err_listrule)
 	for row_listrule.Next() {
 		var (
-			idruleadmin_db string
+			companyrule_adminrule_db int
+			companyrule_name_db      string
 		)
 
-		err = row_listrule.Scan(&idruleadmin_db)
+		err = row_listrule.Scan(&companyrule_adminrule_db, &companyrule_name_db)
 
 		helpers.ErrorCheck(err)
 
-		objRule.Idrule = idruleadmin_db
+		objRule.Adminrule_id = companyrule_adminrule_db
+		objRule.Adminrule_name = companyrule_name_db
 		arraobjRule = append(arraobjRule, objRule)
 		msg = "Success"
 	}
@@ -112,7 +140,7 @@ func Fetch_adminDetail(username string) (helpers.ResponseAdmin, error) {
 		idadmin, name, statuslogin  
 		createadmin, to_char(COALESCE(createdateadmin,now()), 'YYYY-MM-DD HH24:MI:SS'), 
 		updateadmin, to_char(COALESCE(updatedateadmin,now()), 'YYYY-MM-DD HH24:MI:SS')  
-		FROM ` + database_admin_local + `
+		FROM ` + database_admincompany_local + `
 		WHERE username = $1 
 	`
 	var (
@@ -161,7 +189,7 @@ func Fetch_adminDetail(username string) (helpers.ResponseAdmin, error) {
 
 	return res, nil
 }
-func Save_adminHome(admin, username, password, nama, rule, status, sData string) (helpers.Response, error) {
+func Save_adminHome(admin, idrecord, idcompany, username, password, nama, phone1, phone2, status, sData string, idrule int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
@@ -169,25 +197,29 @@ func Save_adminHome(admin, username, password, nama, rule, status, sData string)
 	flag := false
 
 	if sData == "New" {
-		flag = CheckDB(database_admin_local, "username", username)
+		flag = CheckDB(database_admincompany_local, "username", username)
 		if !flag {
 			sql_insert := `
 				insert into
-				` + database_admin_local + ` (
-					username , password, idadmin, name, statuslogin, joindate, 
-					createadmin, createdateadmin
+				` + database_admincompany_local + ` (
+					company_idadmin , companyrule_adminrule, idcompany, tipeadmincompany, 
+					company_username, company_password, company_lastloginadmin, company_name, company_phone1, company_phone2, company_status, 
+					createadmin_company, createadmindate_company
 				) values (
-					$1, $2, $3, $4, $5, $6, 
-					$7, $8
+					$1, $2, $3, $4, 
+					$5, $6, $7, $8, $9, $10, $11, 
+					$12, $13 
 				)
 			`
+
+			startjoin := tglnow.Format("YYYY-MM-DD HH:mm:ss")
 			hashpass := helpers.HashPasswordMD5(password)
-			flag_insert, msg_insert := Exec_SQL(sql_insert, database_admin_local, "INSERT",
-				username, hashpass,
-				rule, nama, status,
-				tglnow.Format("YYYY-MM-DD"),
-				admin,
-				tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+			field_column := database_admincompany_local + tglnow.Format("YYYY")
+			idrecord_counter := Get_counter(field_column)
+			flag_insert, msg_insert := Exec_SQL(sql_insert, database_admincompany_local, "INSERT",
+				strings.ToUpper(idcompany)+tglnow.Format("YY")+strconv.Itoa(idrecord_counter), idrule, idcompany, "ADMIN",
+				username, hashpass, startjoin, nama, phone1, phone2, status,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
 			if flag_insert {
 				msg = "Succes"
@@ -201,19 +233,16 @@ func Save_adminHome(admin, username, password, nama, rule, status, sData string)
 		if password == "" {
 			sql_update := `
 				UPDATE 
-				` + database_admin_local + `  
-				SET name =$1, idadmin=$2, statuslogin=$3,  
-				updateadmin=$4, updatedateadmin=$5 
-				WHERE username =$6 
+				` + database_admincompany_local + `  
+				SET companyrule_adminrule=$1, company_name=$2, 
+				company_phone1=$3, company_phone2=$4, company_status=$5,
+				updateadmin_company=$6, updateadmindate_company=$7  
+				WHERE company_idadmin=$8 AND idcompany=$9 
 			`
 
-			flag_update, msg_update := Exec_SQL(sql_update, database_admin_local, "UPDATE",
-				nama,
-				rule,
-				status,
-				admin,
-				tglnow.Format("YYYY-MM-DD HH:mm:ss"),
-				username)
+			flag_update, msg_update := Exec_SQL(sql_update, database_admincompany_local, "UPDATE",
+				idrule, nama, phone1, phone2, status,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord, idcompany)
 
 			if flag_update {
 				msg = "Succes"
@@ -225,18 +254,14 @@ func Save_adminHome(admin, username, password, nama, rule, status, sData string)
 			sql_update2 := `
 				UPDATE 
 				` + configs.DB_tbl_admin + `   
-				SET name =$1, password=$2, idadmin=$3, statuslogin=$4,  
-				updateadmin=$5, updatedateadmin=$6 
-				WHERE username =$7 
+				SET companyrule_adminrule=$1, company_password=$2, company_name=$3, 
+				company_phone1=$4, company_phone2=$5, company_status=$6,
+				updateadmin_company=$7, updateadmindate_company=$8  
+				WHERE company_idadmin=$9 AND idcompany=$10 
 			`
-			flag_update, msg_update := Exec_SQL(sql_update2, database_admin_local, "UPDATE",
-				nama,
-				hashpass,
-				rule,
-				status,
-				admin,
-				tglnow.Format("YYYY-MM-DD HH:mm:ss"),
-				username)
+			flag_update, msg_update := Exec_SQL(sql_update2, database_admincompany_local, "UPDATE",
+				idrule, hashpass, nama, phone1, phone2, status,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord, idcompany)
 
 			if flag_update {
 				msg = "Succes"
@@ -252,4 +277,24 @@ func Save_adminHome(admin, username, password, nama, rule, status, sData string)
 	res.Time = time.Since(render_page).String()
 
 	return res, nil
+}
+func _Get_adminrule(idcompany string, idrecord int) string {
+	con := db.CreateCon()
+	ctx := context.Background()
+	companyrule_name := ""
+	sql_select := `SELECT
+			companyrule_name    
+			FROM ` + database_adminrulecompany_local + `  
+			WHERE companyrule_adminrule=` + strconv.Itoa(idrecord) + ` AND idcompany='` + idcompany + `'    
+		`
+
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&companyrule_name); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return companyrule_name
 }
