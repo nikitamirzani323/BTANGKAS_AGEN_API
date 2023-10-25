@@ -33,7 +33,7 @@ func Fetch_adminHome(idcompany string) (helpers.ResponseAdmin, error) {
 			company_ipaddress, to_char(COALESCE(company_lastloginadmin,now()), 'YYYY-MM-DD HH24:MI:SS'), 
 			company_name, company_phone1, company_phone2, company_status,    
 			createadmin_company, to_char(COALESCE(createadmindate_company,now()), 'YYYY-MM-DD HH24:MI:SS'), 
-			updateadmin_company, to_char(COALESCE(updateadmindate_company,now()), 'YYYY-MM-DD HH24:MI:SS'),    
+			updateadmin_company, to_char(COALESCE(updateadmindate_company,now()), 'YYYY-MM-DD HH24:MI:SS')     
 			FROM ` + database_admincompany_local + ` 
 			WHERE idcompany=$1 
 			ORDER BY company_lastloginadmin DESC 
@@ -60,7 +60,6 @@ func Fetch_adminHome(idcompany string) (helpers.ResponseAdmin, error) {
 		helpers.ErrorCheck(err)
 		status_css := configs.STATUS_CANCEL
 		if company_status_db == "Y" {
-			company_status_db = "ACTIVE"
 			status_css = configs.STATUS_COMPLETE
 		}
 		if company_lastloginadmin_db == "0000-00-00 00:00:00" {
@@ -76,6 +75,8 @@ func Fetch_adminHome(idcompany string) (helpers.ResponseAdmin, error) {
 		}
 
 		obj.Admin_id = company_idadmin_db
+		obj.Admin_idcompany = idcompany
+		obj.Admin_idrule = companyrule_adminrule_db
 		obj.Admin_rule = _Get_adminrule(idcompany, companyrule_adminrule_db)
 		obj.Admin_tipe = tipeadmincompany_db
 		obj.Admin_username = company_username_db
@@ -93,12 +94,12 @@ func Fetch_adminHome(idcompany string) (helpers.ResponseAdmin, error) {
 	}
 	defer row.Close()
 
-	var objRule entities.Model_adminrule
-	var arraobjRule []entities.Model_adminrule
+	var objRule entities.Model_adminruleshare
+	var arraobjRule []entities.Model_adminruleshare
 	sql_listrule := `SELECT 
 		companyrule_adminrule,companyrule_name 	
 		FROM ` + database_adminrulecompany_local + ` 
-		WHERE idcompany=$1  
+		WHERE idcompany=$1  AND companyrule_name != 'MASTER' 
 	`
 	row_listrule, err_listrule := con.QueryContext(ctx, sql_listrule, idcompany)
 
@@ -189,6 +190,68 @@ func Fetch_adminDetail(username string) (helpers.ResponseAdmin, error) {
 
 	return res, nil
 }
+func Fetch_adminruleHome(idcompany string) (helpers.Response, error) {
+	var obj entities.Model_adminruleall
+	var arraobj []entities.Model_adminruleall
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := `SELECT 
+			companyrule_adminrule , companyrule_name, companyrule_rule,  
+			create_companyrule, to_char(COALESCE(createdate_companyrule,now()), 'YYYY-MM-DD HH24:MI:SS'), 
+			update_companyrule, to_char(COALESCE(updatedate_companyrule,now()), 'YYYY-MM-DD HH24:MI:SS') 
+			FROM ` + database_adminrulecompany_local + ` 
+			WHERE idcompany=$1 
+			ORDER BY createdate_companyrule DESC   
+		`
+
+	row, err := con.QueryContext(ctx, sql_select, idcompany)
+
+	var no int = 0
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		no += 1
+		var (
+			companyrule_adminrule_db                                                                           int
+			companyrule_name_db, companyrule_rule_db                                                           string
+			create_companyrule_db, createdate_companyrule_db, update_companyrule_db, updatedate_companyrule_db string
+		)
+
+		err = row.Scan(&companyrule_adminrule_db, &companyrule_name_db, &companyrule_rule_db,
+			&create_companyrule_db, &createdate_companyrule_db, &update_companyrule_db, &updatedate_companyrule_db)
+
+		helpers.ErrorCheck(err)
+
+		create := ""
+		update := ""
+		if create_companyrule_db != "" {
+			create = create_companyrule_db + ", " + createdate_companyrule_db
+		}
+		if update_companyrule_db != "" {
+			update = update_companyrule_db + ", " + updatedate_companyrule_db
+		}
+
+		obj.Adminrule_id = companyrule_adminrule_db
+		obj.Adminrule_name = companyrule_name_db
+		obj.Adminrule_rule = companyrule_rule_db
+		obj.Adminrule_create = create
+		obj.Adminrule_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+
 func Save_adminHome(admin, idrecord, idcompany, username, password, nama, phone1, phone2, status, sData string, idrule int) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
@@ -278,6 +341,68 @@ func Save_adminHome(admin, idrecord, idcompany, username, password, nama, phone1
 
 	return res, nil
 }
+func Save_adminrule(admin, idcompany, name, rule, sData string, idrecord int) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+	flag := false
+
+	if sData == "New" {
+		flag = CheckDBTwoField(database_adminrulecompany_local, "idcompany ", idcompany, "companyrule_name", strings.ToUpper(name))
+		if strings.ToUpper(name) != "MASTER" {
+			flag = false
+		}
+		if !flag {
+			sql_insert := `
+				insert into
+				` + database_adminrulecompany_local + ` (
+					companyrule_adminrule, idcompany,  companyrule_name, companyrule_rule, 
+					create_companyrule,createdate_companyrule
+				) values (
+					$1, $2, $3, $4, 
+					$5, $6
+				) 
+			`
+
+			field_column := database_adminrulecompany_local + tglnow.Format("YYYY")
+			idrecord_counter := Get_counter(field_column)
+			flag_insert, msg_insert := Exec_SQL(sql_insert, database_adminrulecompany_local, "INSERT",
+				tglnow.Format("YY")+strconv.Itoa(idrecord_counter), idcompany, name, rule,
+				admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
+
+			if flag_insert {
+				msg = "Succes"
+			} else {
+				fmt.Println(msg_insert)
+			}
+		} else {
+			msg = "Duplicate Entry"
+		}
+	} else {
+		sql_update := `
+				UPDATE 
+				` + database_adminrulecompany_local + `   
+				SET companyrule_rule=$1 
+				WHERE companyrule_adminrule=$2 AND idcompany=$3 
+			`
+		flag_update, msg_update := Exec_SQL(sql_update, database_adminrulecompany_local, "UPDATE", rule, idrecord, idcompany)
+
+		if flag_update {
+			msg = "Succes"
+		} else {
+			fmt.Println(msg_update)
+		}
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
+
 func _Get_adminrule(idcompany string, idrecord int) string {
 	con := db.CreateCon()
 	ctx := context.Background()

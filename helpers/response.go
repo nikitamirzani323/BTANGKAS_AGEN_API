@@ -65,6 +65,7 @@ type Responseagenrule struct {
 type ResponseAdmin struct {
 	Status   int         `json:"status"`
 	Message  string      `json:"message"`
+	Company  string      `json:"company"`
 	Record   interface{} `json:"record"`
 	Listrule interface{} `json:"listruleadmin"`
 	Time     string      `json:"time"`

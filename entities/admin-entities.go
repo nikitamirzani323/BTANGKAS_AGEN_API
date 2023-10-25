@@ -2,13 +2,14 @@ package entities
 
 type Model_admin struct {
 	Admin_id            string `json:"admin_id"`
+	Admin_idcompany     string `json:"admin_idcompany"`
 	Admin_username      string `json:"admin_username"`
 	Admin_nama          string `json:"admin_nama"`
 	Admin_tipe          string `json:"admin_tipe"`
+	Admin_idrule        int    `json:"admin_idrule"`
 	Admin_rule          string `json:"admin_rule"`
 	Admin_phone1        string `json:"admin_phone1"`
 	Admin_phone2        string `json:"admin_phone2"`
-	Admin_joindate      string `json:"admin_joindate"`
 	Admin_lastlogin     string `json:"admin_lastlogin"`
 	Admin_lastIpaddress string `json:"admin_lastipaddres"`
 	Admin_status        string `json:"admin_status"`
@@ -16,7 +17,14 @@ type Model_admin struct {
 	Admin_create        string `json:"admin_create"`
 	Admin_update        string `json:"admin_update"`
 }
-type Model_adminrule struct {
+type Model_adminruleall struct {
+	Adminrule_id     int    `json:"adminrule_id"`
+	Adminrule_name   string `json:"adminrule_name"`
+	Adminrule_rule   string `json:"adminrule_rule"`
+	Adminrule_create string `json:"adminrule_create"`
+	Adminrule_update string `json:"adminrule_update"`
+}
+type Model_adminruleshare struct {
 	Adminrule_id   int    `json:"adminrule_id"`
 	Adminrule_name string `json:"adminrule_name"`
 }
@@ -43,17 +51,10 @@ type Controller_adminsave struct {
 	Admin_phone2   string `json:"admin_phone2"`
 	Admin_status   string `json:"admin_status"`
 }
-
-type Responseredis_adminhome struct {
-	Admin_username     string `json:"admin_username"`
-	Admin_nama         string `json:"admin_nama"`
-	Admin_rule         string `json:"admin_rule"`
-	Admin_joindate     string `json:"admin_joindate"`
-	Admin_timezone     string `json:"admin_timezone"`
-	Admin_lastlogin    string `json:"admin_lastlogin"`
-	Admin_lastipaddres string `json:"admin_lastipaddres"`
-	Admin_status       string `json:"admin_status"`
-}
-type Responseredis_adminrule struct {
-	Adminrule_idrule string `json:"adminrule_idruleadmin"`
+type Controller_adminrulesave struct {
+	Sdata          string `json:"sdata" validate:"required"`
+	Page           string `json:"page" validate:"required"`
+	Adminrule_id   int    `json:"adminrule_id"`
+	Adminrule_name string `json:"adminrule_name" validate:"required"`
+	Adminrule_rule string `json:"adminrule_rule"`
 }
