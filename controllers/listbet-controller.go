@@ -13,14 +13,20 @@ import (
 	"github.com/nikitamirzani323/BTANGKAS_AGEN_API/models"
 )
 
-const Fieldlistbet_home_redis = "LISTBET_BACKEND"
+const Fieldlistbet_home_redis = "AGEN_LISTBET"
 const Fieldlistbet_home_client_redis = "LISTBET_FRONTEND"
 
 func Listbethome(c *fiber.Ctx) error {
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	_, _, client_company := helpers.Parsing_Decry(temp_decp, "==")
+
 	var obj entities.Model_lisbet
 	var arraobj []entities.Model_lisbet
 	render_page := time.Now()
-	resultredis, flag := helpers.GetRedis(Fieldlistbet_home_redis)
+	resultredis, flag := helpers.GetRedis(Fieldlistbet_home_redis + "_" + client_company)
 	jsonredis := []byte(resultredis)
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -37,7 +43,7 @@ func Listbethome(c *fiber.Ctx) error {
 	})
 
 	if !flag {
-		result, err := models.Fetch_listbetHome()
+		result, err := models.Fetch_listbetHome(client_company)
 		if err != nil {
 			c.Status(fiber.StatusBadRequest)
 			return c.JSON(fiber.Map{
@@ -46,7 +52,7 @@ func Listbethome(c *fiber.Ctx) error {
 				"record":  nil,
 			})
 		}
-		helpers.SetRedis(Fieldlistbet_home_redis, result, 60*time.Minute)
+		helpers.SetRedis(Fieldlistbet_home_redis+"_"+client_company, result, 60*time.Minute)
 		fmt.Println("LISTBET MYSQL")
 		return c.JSON(result)
 	} else {
@@ -91,11 +97,11 @@ func ListbetSave(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
 	temp_decp := helpers.Decryption(name)
-	client_admin, _, _ := helpers.Parsing_Decry(temp_decp, "==")
+	client_admin, _, client_company := helpers.Parsing_Decry(temp_decp, "==")
 
 	// admin, sData string, idrecord int, minbet float64
 	result, err := models.Save_listbet(
-		client_admin,
+		client_admin, client_company,
 		client.Sdata, client.Lisbet_id, client.Lisbet_minbet)
 	if err != nil {
 		c.Status(fiber.StatusBadRequest)
@@ -106,11 +112,11 @@ func ListbetSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_listbet()
+	_deleteredis_listbet(client_company)
 	return c.JSON(result)
 }
-func _deleteredis_listbet() {
-	val_master := helpers.DeleteRedis(Fieldlistbet_home_redis)
-	fmt.Printf("Redis Delete BACKEND LISTBET : %d", val_master)
+func _deleteredis_listbet(idcompany string) {
+	val_master := helpers.DeleteRedis(Fieldlistbet_home_redis + "_" + idcompany)
+	fmt.Printf("Redis Delete AGEN LISTBET : %d\n", val_master)
 
 }

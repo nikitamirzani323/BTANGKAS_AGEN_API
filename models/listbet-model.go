@@ -16,7 +16,7 @@ import (
 
 const database_listbet_local = configs.DB_tbl_mst_listbet
 
-func Fetch_listbetHome() (helpers.Response, error) {
+func Fetch_listbetHome(idcompany string) (helpers.Response, error) {
 	var obj entities.Model_lisbet
 	var arraobj []entities.Model_lisbet
 	var res helpers.Response
@@ -25,23 +25,26 @@ func Fetch_listbetHome() (helpers.Response, error) {
 	ctx := context.Background()
 	start := time.Now()
 
+	tbl_mst_listbet, _, _, _ := Get_mappingdatabase(idcompany)
+
 	sql_select := `SELECT 
-			idbet , minbet_listbet,  
+			idbet_listbet , minbet_listbet,  
 			create_listbet, to_char(COALESCE(createdate_listbet,now()), 'YYYY-MM-DD HH24:MI:SS'), 
 			update_listbet, to_char(COALESCE(updatedate_listbet,now()), 'YYYY-MM-DD HH24:MI:SS') 
-			FROM ` + database_listbet_local + `  
+			FROM ` + tbl_mst_listbet + `  
+			WHERE idcompany=$1   
 			ORDER BY createdate_listbet DESC   `
 
-	row, err := con.QueryContext(ctx, sql_select)
+	row, err := con.QueryContext(ctx, sql_select, idcompany)
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idbet_db                                                                           int
+			idbet_listbet_db                                                                   int
 			minbet_listbet_db                                                                  float64
 			create_listbet_db, createdate_listbet_db, update_listbet_db, updatedate_listbet_db string
 		)
 
-		err = row.Scan(&idbet_db, &minbet_listbet_db,
+		err = row.Scan(&idbet_listbet_db, &minbet_listbet_db,
 			&create_listbet_db, &createdate_listbet_db, &update_listbet_db, &updatedate_listbet_db)
 
 		helpers.ErrorCheck(err)
@@ -54,7 +57,7 @@ func Fetch_listbetHome() (helpers.Response, error) {
 			update = update_listbet_db + ", " + updatedate_listbet_db
 		}
 
-		obj.Lisbet_id = idbet_db
+		obj.Lisbet_id = idbet_listbet_db
 		obj.Lisbet_minbet = minbet_listbet_db
 		obj.Lisbet_create = create
 		obj.Lisbet_update = update
@@ -70,16 +73,18 @@ func Fetch_listbetHome() (helpers.Response, error) {
 
 	return res, nil
 }
-func Save_listbet(admin, sData string, idrecord int, minbet float64) (helpers.Response, error) {
+func Save_listbet(admin, idcompany, sData string, idrecord int, minbet float64) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
 	tglnow, _ := goment.New()
 	render_page := time.Now()
 
+	tbl_mst_listbet, _, _, _ := Get_mappingdatabase(idcompany)
+
 	if sData == "New" {
 		sql_insert := `
 			insert into
-			` + database_listbet_local + ` (
+			` + tbl_mst_listbet + ` (
 				idbet , minbet_listbet,  
 				create_listbet, createdate_listbet 
 			) values (
@@ -88,9 +93,9 @@ func Save_listbet(admin, sData string, idrecord int, minbet float64) (helpers.Re
 			)
 			`
 
-		field_column := database_listbet_local + tglnow.Format("YYYY")
+		field_column := tbl_mst_listbet + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
-		flag_insert, msg_insert := Exec_SQL(sql_insert, database_listbet_local, "INSERT",
+		flag_insert, msg_insert := Exec_SQL(sql_insert, tbl_mst_listbet, "INSERT",
 			tglnow.Format("YY")+strconv.Itoa(idrecord_counter), minbet,
 			admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"))
 
