@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/buger/jsonparser"
@@ -14,7 +15,7 @@ import (
 )
 
 const Fieldlistbet_home_redis = "AGEN_LISTBET"
-const Fieldlistbet_home_client_redis = "LISTBET_FRONTEND"
+const Fieldcompanylistbet_home_redis = "COMPANYLISTBET_BACKEND"
 
 func Listbethome(c *fiber.Ctx) error {
 	user := c.Locals("jwt").(*jwt.Token)
@@ -25,9 +26,12 @@ func Listbethome(c *fiber.Ctx) error {
 
 	var obj entities.Model_lisbet
 	var arraobj []entities.Model_lisbet
+	var objmstlisbet entities.Model_lisbetshare
+	var arraobjmstlisbet []entities.Model_lisbetshare
 	render_page := time.Now()
 	resultredis, flag := helpers.GetRedis(Fieldlistbet_home_redis + "_" + client_company)
 	jsonredis := []byte(resultredis)
+	listbet_RD, _, _, _ := jsonparser.Get(jsonredis, "listbet")
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		lisbet_id, _ := jsonparser.GetInt(value, "lisbet_id")
@@ -41,7 +45,12 @@ func Listbethome(c *fiber.Ctx) error {
 		obj.Lisbet_update = lisbet_update
 		arraobj = append(arraobj, obj)
 	})
+	jsonparser.ArrayEach(listbet_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		lisbet_minbet, _ := jsonparser.GetFloat(value, "lisbet_minbet")
 
+		objmstlisbet.Lisbet_minbet = float64(lisbet_minbet)
+		arraobjmstlisbet = append(arraobjmstlisbet, objmstlisbet)
+	})
 	if !flag {
 		result, err := models.Fetch_listbetHome(client_company)
 		if err != nil {
@@ -57,6 +66,88 @@ func Listbethome(c *fiber.Ctx) error {
 		return c.JSON(result)
 	} else {
 		fmt.Println("LISTBET CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"listbet": arraobjmstlisbet,
+			"time":    time.Since(render_page).String(),
+		})
+	}
+}
+func Listbetconfpointhome(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_listbetconfpoint)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	_, _, client_company := helpers.Parsing_Decry(temp_decp, "==")
+
+	var obj entities.Model_listbet_conf
+	var arraobj []entities.Model_listbet_conf
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fieldlistbet_home_redis + "_CONFIG_" + client_company + "_" + strconv.Itoa(client.Lisbet_idbet))
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		listbetconf_id, _ := jsonparser.GetInt(value, "listbetconf_id")
+		listbetconf_idbet, _ := jsonparser.GetInt(value, "listbetconf_idbet")
+		listbetconf_nmpoin, _ := jsonparser.GetString(value, "listbetconf_nmpoin")
+		listbetconf_poin, _ := jsonparser.GetInt(value, "listbetconf_poin")
+		listbetconf_create, _ := jsonparser.GetString(value, "listbetconf_create")
+		listbetconf_update, _ := jsonparser.GetString(value, "listbetconf_update")
+
+		obj.Listbetconf_id = int(listbetconf_id)
+		obj.Listbetconf_idbet = int(listbetconf_idbet)
+		obj.Listbetconf_nmpoin = listbetconf_nmpoin
+		obj.Listbetconf_poin = int(listbetconf_poin)
+		obj.Listbetconf_create = listbetconf_create
+		obj.Listbetconf_update = listbetconf_update
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_listbetConfPoint(client.Lisbet_idbet, client_company)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fieldlistbet_home_redis+"_CONFIG_"+client_company+"_"+strconv.Itoa(client.Lisbet_idbet), result, 60*time.Minute)
+		fmt.Println("AGEN CONF MYSQL")
+		return c.JSON(result)
+	} else {
+		fmt.Println("COMPANY CONF CACHE")
 		return c.JSON(fiber.Map{
 			"status":  fiber.StatusOK,
 			"message": "Success",
@@ -118,5 +209,8 @@ func ListbetSave(c *fiber.Ctx) error {
 func _deleteredis_listbet(idcompany string) {
 	val_master := helpers.DeleteRedis(Fieldlistbet_home_redis + "_" + idcompany)
 	fmt.Printf("Redis Delete AGEN LISTBET : %d\n", val_master)
+
+	val_super := helpers.DeleteRedis(Fieldcompanylistbet_home_redis + "_" + idcompany)
+	fmt.Printf("Redis Delete AGEN LISTBET : %d\n", val_super)
 
 }

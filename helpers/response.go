@@ -70,12 +70,12 @@ type ResponseAdmin struct {
 	Listrule interface{} `json:"listruleadmin"`
 	Time     string      `json:"time"`
 }
-type ResponseEmployee struct {
-	Status          int         `json:"status"`
-	Message         string      `json:"message"`
-	Record          interface{} `json:"record"`
-	Listdepartement interface{} `json:"listdepartement"`
-	Time            string      `json:"time"`
+type ResponseListbet struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Record  interface{} `json:"record"`
+	ListBet interface{} `json:"listbet"`
+	Time    string      `json:"time"`
 }
 type ErrorResponse struct {
 	Field string
