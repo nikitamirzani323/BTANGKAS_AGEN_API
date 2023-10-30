@@ -23,6 +23,13 @@ type Controller_listbetsave struct {
 	Lisbet_id     int    `json:"lisbet_id"`
 	Lisbet_minbet int    `json:"lisbet_minbet" validate:"required"`
 }
+type Controller_listbetconfpoinsave struct {
+	Page        string `json:"page" validate:"required"`
+	Sdata       string `json:"sdata" validate:"required"`
+	Conf_id     int    `json:"conf_id"`
+	Conf_idbet  int    `json:"conf_idbet"`
+	Conf_minbet int    `json:"conf_minbet" validate:"required"`
+}
 type Controller_listbetconfpoint struct {
 	Lisbet_idbet int `json:"listbet_idbet" validate:"required"`
 }

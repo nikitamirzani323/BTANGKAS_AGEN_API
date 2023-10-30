@@ -203,14 +203,66 @@ func ListbetSave(c *fiber.Ctx) error {
 		})
 	}
 
-	_deleteredis_listbet(client_company)
+	_deleteredis_listbet(client_company, 0)
 	return c.JSON(result)
 }
-func _deleteredis_listbet(idcompany string) {
+func ListbetconfpointSave(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_listbetconfpoinsave)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	client_admin, _, client_company := helpers.Parsing_Decry(temp_decp, "==")
+
+	// admin, idcompany, sData string, idrecord, idbet, point int
+	result, err := models.Save_ConfPoint(
+		client_admin, client_company,
+		client.Sdata, client.Conf_id, client.Conf_idbet, client.Conf_minbet)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	_deleteredis_listbet(client_company, client.Conf_idbet)
+	return c.JSON(result)
+}
+func _deleteredis_listbet(idcompany string, idbet int) {
 	val_master := helpers.DeleteRedis(Fieldlistbet_home_redis + "_" + idcompany)
 	fmt.Printf("Redis Delete AGEN LISTBET : %d\n", val_master)
+	val_masterlistbetcof := helpers.DeleteRedis(Fieldlistbet_home_redis + "_CONFIG_" + idcompany + "_" + strconv.Itoa(idbet))
+	fmt.Printf("Redis Delete AGEN LISTBET CONF POIN : %d\n", val_masterlistbetcof)
 
 	val_super := helpers.DeleteRedis(Fieldcompanylistbet_home_redis + "_" + idcompany)
-	fmt.Printf("Redis Delete AGEN LISTBET : %d\n", val_super)
+	fmt.Printf("Redis Delete SUPER LISTBET : %d\n", val_super)
 
 }

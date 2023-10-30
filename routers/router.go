@@ -50,9 +50,12 @@ func Init() *fiber.App {
 	app.Post("/api/alladmin", middleware.JWTProtected(), controllers.Adminhome)
 	app.Post("/api/detailadmin", middleware.JWTProtected(), controllers.AdminDetail)
 	app.Post("/api/saveadmin", middleware.JWTProtected(), controllers.AdminSave)
-
 	app.Post("/api/alladminrule", middleware.JWTProtected(), controllers.Adminrulehome)
 	app.Post("/api/saveadminrule", middleware.JWTProtected(), controllers.AdminruleSave)
+	app.Post("/api/listbet", middleware.JWTProtected(), controllers.Listbethome)
+	app.Post("/api/listbetconf", middleware.JWTProtected(), controllers.Listbetconfpointhome)
+	app.Post("/api/listbetsave", middleware.JWTProtected(), controllers.ListbetSave)
+	app.Post("/api/listbetconfsave", middleware.JWTProtected(), controllers.ListbetconfpointSave)
 
 	app.Post("/api/listpattern", middleware.JWTProtected(), controllers.Listpatternhome)
 	app.Post("/api/listpatternsave", middleware.JWTProtected(), controllers.ListpatternSave)
@@ -66,8 +69,6 @@ func Init() *fiber.App {
 	app.Post("/api/listpoint", middleware.JWTProtected(), controllers.Listpointhome)
 	app.Post("/api/listpointshare", middleware.JWTProtected(), controllers.Listpointsharehome)
 	app.Post("/api/listpointsave", middleware.JWTProtected(), controllers.ListpointSave)
-	app.Post("/api/listbet", middleware.JWTProtected(), controllers.Listbethome)
-	app.Post("/api/listbetsave", middleware.JWTProtected(), controllers.ListbetSave)
 
 	return app
 }

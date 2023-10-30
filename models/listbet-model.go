@@ -111,7 +111,7 @@ func Fetch_listbetConfPoint(idbet int, idcompany string) (helpers.Response, erro
 	_, tbl_mst_config, _, _ := Get_mappingdatabase(idcompany)
 
 	sql_select := `SELECT 
-			A.idconf_conf, A.idbet_listbet, A.idpoin, A.poin_conf,  
+			A.idconf_conf, A.idbet_listbet, A.idpoin, A.poin_conf,  B.nmpoin,
 			A.create_conf, to_char(COALESCE(A.createdate_conf,now()), 'YYYY-MM-DD HH24:MI:SS'), 
 			A.update_conf, to_char(COALESCE(A.updatedate_conf,now()), 'YYYY-MM-DD HH24:MI:SS') 
 			FROM ` + tbl_mst_config + ` as A   
@@ -125,10 +125,11 @@ func Fetch_listbetConfPoint(idbet int, idcompany string) (helpers.Response, erro
 	for row.Next() {
 		var (
 			idconf_conf_db, idbet_listbet_db, idpoin_db, poin_conf_db              int
+			nmpoin_db                                                              string
 			create_conf_db, createdate_conf_db, update_conf_db, updatedate_conf_db string
 		)
 
-		err = row.Scan(&idconf_conf_db, &idbet_listbet_db, &idpoin_db, &poin_conf_db,
+		err = row.Scan(&idconf_conf_db, &idbet_listbet_db, &idpoin_db, &poin_conf_db, &nmpoin_db,
 			&create_conf_db, &createdate_conf_db, &update_conf_db, &updatedate_conf_db)
 
 		helpers.ErrorCheck(err)
@@ -142,7 +143,7 @@ func Fetch_listbetConfPoint(idbet int, idcompany string) (helpers.Response, erro
 		}
 		obj.Listbetconf_id = idconf_conf_db
 		obj.Listbetconf_idbet = idbet_listbet_db
-		obj.Listbetconf_nmpoin = _Get_infomasterpoint(idpoin_db)
+		obj.Listbetconf_nmpoin = nmpoin_db
 		obj.Listbetconf_poin = poin_conf_db
 		obj.Listbetconf_create = create
 		obj.Listbetconf_update = update
@@ -221,7 +222,40 @@ func Save_listbet(admin, idcompany, sData string, idrecord, minbet int) (helpers
 
 	return res, nil
 }
+func Save_ConfPoint(admin, idcompany, sData string, idrecord, idbet, point int) (helpers.Response, error) {
+	var res helpers.Response
 
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+
+	_, tbl_mst_config, _, _ := Get_mappingdatabase(idcompany)
+
+	sql_update := `
+			UPDATE 
+			` + tbl_mst_config + `  
+			SET poin_conf=$1,  
+			update_conf=$2, updatedate_conf=$3       
+			WHERE idconf_conf=$4 AND idcompany=$5 AND idbet_listbet=$6       
+		`
+
+	flag_update, msg_update := Exec_SQL(sql_update, tbl_mst_config, "UPDATE",
+		point,
+		admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord, idcompany, idbet)
+
+	if flag_update {
+		msg = "Succes"
+	} else {
+		fmt.Println(msg_update)
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
 func _Get_infomasterpoint(idpoin int) string {
 	con := db.CreateCon()
 	ctx := context.Background()
