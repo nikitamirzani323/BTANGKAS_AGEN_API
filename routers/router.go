@@ -57,18 +57,5 @@ func Init() *fiber.App {
 	app.Post("/api/listbetsave", middleware.JWTProtected(), controllers.ListbetSave)
 	app.Post("/api/listbetconfsave", middleware.JWTProtected(), controllers.ListbetconfpointSave)
 
-	app.Post("/api/listpattern", middleware.JWTProtected(), controllers.Listpatternhome)
-	app.Post("/api/listpatternsave", middleware.JWTProtected(), controllers.ListpatternSave)
-	app.Post("/api/listpatterndetail", middleware.JWTProtected(), controllers.Listpatterndetailhome)
-	app.Post("/api/listpatterndetailsave", middleware.JWTProtected(), controllers.ListpatterndetailSave)
-	app.Post("/api/listpatterndetaildelete", middleware.JWTProtected(), controllers.ListpatterndetailDelete)
-	app.Post("/api/pattern", middleware.JWTProtected(), controllers.Patternhome)
-	app.Post("/api/patternbycode", middleware.JWTProtected(), controllers.PatternByPoin)
-	app.Post("/api/patternsave", middleware.JWTProtected(), controllers.PatternSave)
-	app.Post("/api/patternsavemanual", middleware.JWTProtected(), controllers.PatternSavemanual)
-	app.Post("/api/listpoint", middleware.JWTProtected(), controllers.Listpointhome)
-	app.Post("/api/listpointshare", middleware.JWTProtected(), controllers.Listpointsharehome)
-	app.Post("/api/listpointsave", middleware.JWTProtected(), controllers.ListpointSave)
-
 	return app
 }
