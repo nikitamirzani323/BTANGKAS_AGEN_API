@@ -10,6 +10,7 @@ type Model_transaksi struct {
 	Transaksi_totalbonus    int    `json:"transaksi_totalbonus"`
 	Transaksi_card_codepoin string `json:"transaksi_card_codepoin"`
 	Transaksi_card_pattern  string `json:"transaksi_card_pattern"`
+	Transaksi_card_result   string `json:"transaksi_card_result"`
 	Transaksi_card_win      string `json:"transaksi_card_win"`
 	Transaksi_create        string `json:"transaksi_create"`
 	Transaksi_update        string `json:"transaksi_update"`
@@ -26,6 +27,7 @@ type Model_transaksidetail struct {
 	Transaksidetail_card_codepoin string `json:"transaksidetail_card_codepoin"`
 	Transaksidetail_card_win      string `json:"transaksidetail_card_win"`
 	Transaksidetail_status        string `json:"transaksidetail_status"`
+	Transaksidetail_status_css    string `json:"transaksidetail_status_css"`
 	Transaksidetail_create        string `json:"transaksidetail_create"`
 	Transaksidetail_update        string `json:"transaksidetail_update"`
 }

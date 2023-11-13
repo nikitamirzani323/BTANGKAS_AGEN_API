@@ -39,6 +39,7 @@ func Transksihome(c *fiber.Ctx) error {
 		transaksi_totalbonus, _ := jsonparser.GetInt(value, "transaksi_totalbonus")
 		transaksi_card_codepoin, _ := jsonparser.GetString(value, "transaksi_card_codepoin")
 		transaksi_card_pattern, _ := jsonparser.GetString(value, "transaksi_card_pattern")
+		transaksi_card_result, _ := jsonparser.GetString(value, "transaksi_card_result")
 		transaksi_card_win, _ := jsonparser.GetString(value, "transaksi_card_win")
 		transaksi_create, _ := jsonparser.GetString(value, "transaksi_create")
 		transaksi_update, _ := jsonparser.GetString(value, "transaksi_update")
@@ -52,6 +53,7 @@ func Transksihome(c *fiber.Ctx) error {
 		obj.Transaksi_totalbonus = int(transaksi_totalbonus)
 		obj.Transaksi_card_codepoin = transaksi_card_codepoin
 		obj.Transaksi_card_pattern = transaksi_card_pattern
+		obj.Transaksi_card_result = transaksi_card_result
 		obj.Transaksi_card_win = transaksi_card_win
 		obj.Transaksi_update = transaksi_create
 		obj.Transaksi_update = transaksi_update
@@ -134,6 +136,7 @@ func Transksidetailhome(c *fiber.Ctx) error {
 		transaksidetail_card_codepoin, _ := jsonparser.GetString(value, "transaksidetail_card_codepoin")
 		transaksidetail_card_win, _ := jsonparser.GetString(value, "transaksidetail_card_win")
 		transaksidetail_status, _ := jsonparser.GetString(value, "transaksidetail_status")
+		transaksidetail_status_css, _ := jsonparser.GetString(value, "transaksidetail_status_css")
 		transaksidetail_create, _ := jsonparser.GetString(value, "transaksidetail_create")
 		transaksidetail_update, _ := jsonparser.GetString(value, "transaksidetail_update")
 
@@ -148,6 +151,7 @@ func Transksidetailhome(c *fiber.Ctx) error {
 		obj.Transaksidetail_card_codepoin = transaksidetail_card_codepoin
 		obj.Transaksidetail_card_win = transaksidetail_card_win
 		obj.Transaksidetail_status = transaksidetail_status
+		obj.Transaksidetail_status_css = transaksidetail_status_css
 		obj.Transaksidetail_create = transaksidetail_create
 		obj.Transaksidetail_update = transaksidetail_update
 		arraobj = append(arraobj, obj)

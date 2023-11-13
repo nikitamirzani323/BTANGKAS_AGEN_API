@@ -69,6 +69,7 @@ func Fetch_transaksiHome(idcompany string) (helpers.Response, error) {
 		obj.Transaksi_totalbonus = total_bonus_db
 		obj.Transaksi_card_codepoin = card_codepoin_db + " - " + nmpoin_db
 		obj.Transaksi_card_pattern = card_pattern_db
+		obj.Transaksi_card_result = card_result_db
 		obj.Transaksi_card_win = card_win_db
 		obj.Transaksi_create = create
 		obj.Transaksi_update = update
@@ -131,6 +132,10 @@ func Fetch_transaksidetailHome(idtransaksi, idcompany string) (helpers.Response,
 		if update_transaksidetail_db != "" {
 			update = update_transaksidetail_db + ", " + updatedate_transaksidetail_db
 		}
+		status_css := configs.STATUS_CANCEL
+		if status_transaksidetail_db == "WIN" {
+			status_css = configs.STATUS_COMPLETE
+		}
 
 		obj.Transaksidetail_id = idtransaksidetail_db
 		obj.Transaksidetail_date = createdate_transaksidetail_db
@@ -143,6 +148,7 @@ func Fetch_transaksidetailHome(idtransaksi, idcompany string) (helpers.Response,
 		obj.Transaksidetail_card_codepoin = codepoin_db
 		obj.Transaksidetail_card_win = resultcard_win_db
 		obj.Transaksidetail_status = status_transaksidetail_db
+		obj.Transaksidetail_status_css = status_css
 		obj.Transaksidetail_create = create
 		obj.Transaksidetail_update = update
 		arraobj = append(arraobj, obj)
