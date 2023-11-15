@@ -41,6 +41,8 @@ func Transksihome(c *fiber.Ctx) error {
 		transaksi_card_pattern, _ := jsonparser.GetString(value, "transaksi_card_pattern")
 		transaksi_card_result, _ := jsonparser.GetString(value, "transaksi_card_result")
 		transaksi_card_win, _ := jsonparser.GetString(value, "transaksi_card_win")
+		transaksi_status, _ := jsonparser.GetString(value, "transaksi_status")
+		transaksi_status_css, _ := jsonparser.GetString(value, "transaksi_status_css")
 		transaksi_create, _ := jsonparser.GetString(value, "transaksi_create")
 		transaksi_update, _ := jsonparser.GetString(value, "transaksi_update")
 
@@ -55,6 +57,8 @@ func Transksihome(c *fiber.Ctx) error {
 		obj.Transaksi_card_pattern = transaksi_card_pattern
 		obj.Transaksi_card_result = transaksi_card_result
 		obj.Transaksi_card_win = transaksi_card_win
+		obj.Transaksi_status = transaksi_status
+		obj.Transaksi_status_css = transaksi_status_css
 		obj.Transaksi_update = transaksi_create
 		obj.Transaksi_update = transaksi_update
 		arraobj = append(arraobj, obj)

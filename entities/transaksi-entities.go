@@ -12,6 +12,8 @@ type Model_transaksi struct {
 	Transaksi_card_pattern  string `json:"transaksi_card_pattern"`
 	Transaksi_card_result   string `json:"transaksi_card_result"`
 	Transaksi_card_win      string `json:"transaksi_card_win"`
+	Transaksi_status        string `json:"transaksi_status"`
+	Transaksi_status_css    string `json:"transaksi_status_css"`
 	Transaksi_create        string `json:"transaksi_create"`
 	Transaksi_update        string `json:"transaksi_update"`
 }
